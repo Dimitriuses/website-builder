@@ -209,6 +209,13 @@ if (fs.existsSync(ASSETS_DIR)) {
   console.log(`[ASSETS] Copied to ${BUILD_DIR}/${ASSETS_DIR}/`);
 }
 
+// Copy products to build directory
+const PRODUCTS_DIR = 'products';
+if (fs.existsSync(PRODUCTS_DIR)) {
+  copyDirectory(PRODUCTS_DIR, path.join(BUILD_DIR, PRODUCTS_DIR));
+  console.log(`[PRODUCTS] Copied to ${BUILD_DIR}/${PRODUCTS_DIR}/`);
+}
+
 // Build all pages
 const pageFiles = fs.readdirSync(PAGES_DIR).filter(f => f.endsWith('.json'));
 

@@ -15,6 +15,15 @@
       }
     },
     {
+      "name": "products",
+      "vars": {
+        "PRODUCTS_TITLE": "Our Products",
+        "PRODUCTS_SUBTITLE": "Discover our premium collection",
+        "PRODUCTS_DIR": "products",
+        "BUTTON_TEXT": "View Details"
+      }
+    },
+    {
       "name": "faq",
       "vars": {
         "FAQ_TITLE": "Frequently Asked Questions",
