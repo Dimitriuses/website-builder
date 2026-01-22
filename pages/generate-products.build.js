@@ -62,16 +62,43 @@ function generateProductPages() {
         return;
       }
 
-      // Main image is the first one
-      const mainImage = `${productsDir}/${folderName}/${imageFiles[0]}`;
+      // Build carousel slides
+      let carouselSlidesHtml = '';
+      imageFiles.forEach((imgFile, index) => {
+        const imgPath = `${productsDir}/${folderName}/${imgFile}`;
+        const activeClass = index === 0 ? 'active' : '';
+        carouselSlidesHtml += `
+            <div class="carousel-item ${activeClass}">
+              <img src="${imgPath}" class="d-block w-100" alt="${productConfig.name}">
+            </div>`;
+      });
 
-      // Generate thumbnail gallery HTML for additional images
+      // Build carousel controls (only if multiple images)
+      let carouselControlsHtml = '';
+      if (imageFiles.length > 1) {
+        carouselControlsHtml = `
+          <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+          </button>
+          <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+          </button>
+          <div class="carousel-indicators">
+            ${imageFiles.map((_, i) => 
+              `<button type="button" data-bs-target="#productCarousel" data-bs-slide-to="${i}" ${i === 0 ? 'class="active" aria-current="true"' : ''}></button>`
+            ).join('')}
+          </div>`;
+      }
+
+      // Generate thumbnail gallery HTML
       let thumbnailsHtml = '';
       if (imageFiles.length > 1) {
-        imageFiles.forEach(imgFile => {
+        imageFiles.forEach((imgFile, index) => {
           const imgPath = `${productsDir}/${folderName}/${imgFile}`;
           thumbnailsHtml += `
-            <img src="${imgPath}" alt="${productConfig.name}" class="thumbnail-image" onclick="changeMainImage('${imgPath}')">
+            <img src="${imgPath}" alt="${productConfig.name}" class="thumbnail-image" data-bs-target="#productCarousel" data-bs-slide-to="${index}">
           `;
         });
       }
@@ -85,7 +112,8 @@ function generateProductPages() {
         header_theme: 'light',
         components: [],
         content: template
-          .replace(/{{MAIN_IMAGE}}/g, mainImage)
+          .replace(/{{CAROUSEL_SLIDES}}/g, carouselSlidesHtml)
+          .replace(/{{CAROUSEL_CONTROLS}}/g, carouselControlsHtml)
           .replace(/{{PRODUCT_NAME}}/g, productConfig.name || 'Untitled Product')
           .replace(/{{PRODUCT_PRICE}}/g, productConfig.price || 'Price not available')
           .replace(/{{PRODUCT_DESCRIPTION}}/g, productConfig.description || 'No description available')

@@ -53,12 +53,20 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   });
+  
+  // Product detail page - thumbnail click to navigate carousel
+  document.querySelectorAll('.thumbnail-image').forEach(thumbnail => {
+    thumbnail.addEventListener('click', function() {
+      const carouselTarget = this.getAttribute('data-bs-target');
+      const slideIndex = this.getAttribute('data-bs-slide-to');
+      
+      if (carouselTarget && slideIndex) {
+        const carousel = document.querySelector(carouselTarget);
+        if (carousel) {
+          const bsCarousel = bootstrap.Carousel.getInstance(carousel) || new bootstrap.Carousel(carousel);
+          bsCarousel.to(parseInt(slideIndex));
+        }
+      }
+    });
+  });
 });
-
-// Product detail page - change main image on thumbnail click
-function changeMainImage(imagePath) {
-  const mainImage = document.querySelector('.main-product-image');
-  if (mainImage) {
-    mainImage.src = imagePath;
-  }
-}

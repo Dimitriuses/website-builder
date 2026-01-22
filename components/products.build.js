@@ -52,24 +52,51 @@ function build(vars, loadComponent, replaceVariables) {
           // Load product configuration
           const productConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
           
-          // Find the first image in the folder
+          // Find all images in the folder
           const files = fs.readdirSync(productPath);
           const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
-          const imageFile = files.find(file => 
+          const imageFiles = files.filter(file => 
             imageExtensions.some(ext => file.toLowerCase().endsWith(ext))
           );
           
-          if (!imageFile) {
-            console.log(`  [WARNING] No image found in ${folderName}/`);
+          if (imageFiles.length === 0) {
+            console.log(`  [WARNING] No images found in ${folderName}/`);
             return;
           }
           
-          // Build image path relative to build output
-          const imagePath = `${productsDir}/${folderName}/${imageFile}`;
+          // Build carousel images HTML
+          let carouselImagesHtml = '';
+          imageFiles.forEach((imageFile, index) => {
+            const imagePath = `${productsDir}/${folderName}/${imageFile}`;
+            const activeClass = index === 0 ? 'active' : '';
+            carouselImagesHtml += `
+          <div class="carousel-item ${activeClass}">
+            <img src="${imagePath}" class="d-block w-100 product-image" alt="${productConfig.name || 'Product'}">
+          </div>`;
+          });
+          
+          // Build carousel controls (only if multiple images)
+          let carouselControlsHtml = '';
+          if (imageFiles.length > 1) {
+            carouselControlsHtml = `
+        <button class="carousel-control-prev" type="button" data-bs-target="#carousel-${folderName}" data-bs-slide="prev">
+          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#carousel-${folderName}" data-bs-slide="next">
+          <span class="carousel-control-next-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Next</span>
+        </button>
+        <div class="carousel-indicators">
+          ${imageFiles.map((_, i) => `<button type="button" data-bs-target="#carousel-${folderName}" data-bs-slide-to="${i}" ${i === 0 ? 'class="active"' : ''}></button>`).join('')}
+        </div>`;
+          }
           
           // Prepare product card variables
           const cardVars = {
-            IMAGE_PATH: imagePath,
+            PRODUCT_ID: folderName,
+            CAROUSEL_IMAGES: carouselImagesHtml,
+            CAROUSEL_CONTROLS: carouselControlsHtml,
             PRODUCT_NAME: productConfig.name || 'Untitled Product',
             PRODUCT_DESCRIPTION: productConfig.description || '',
             PRODUCT_PRICE: productConfig.price || 'Price not available',

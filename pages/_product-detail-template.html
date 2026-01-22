@@ -3,10 +3,15 @@
     <!-- Product Images -->
     <div class="col-md-6 mb-4">
       <div class="product-detail-images">
-        <div class="main-image-container">
-          <img src="{{MAIN_IMAGE}}" alt="{{PRODUCT_NAME}}" class="img-fluid rounded main-product-image">
+        <!-- Main Carousel -->
+        <div id="productCarousel" class="carousel slide" data-bs-ride="false">
+          <div class="carousel-inner">
+            {{CAROUSEL_SLIDES}}
+          </div>
+          {{CAROUSEL_CONTROLS}}
         </div>
-        <!-- Thumbnail gallery if multiple images -->
+        
+        <!-- Thumbnail Gallery -->
         <div class="thumbnail-gallery mt-3">
           {{THUMBNAIL_IMAGES}}
         </div>
