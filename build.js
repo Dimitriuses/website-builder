@@ -50,7 +50,7 @@ function loadComponent(componentName) {
   const componentPath = path.join(COMPONENTS_DIR, `${componentName}.html`);
   
   if (!fs.existsSync(componentPath)) {
-    console.warn(`⚠️  Component not found: ${componentName}`);
+    console.warn(`[WARNING] Component not found: ${componentName}`);
     return '';
   }
   
@@ -102,7 +102,7 @@ function buildComponent(componentName, vars = {}) {
         return componentBuilder.build(allVars, loadComponent, replaceVariables);
       }
     } catch (error) {
-      console.error(`❌ Error in build script for ${componentName}:`, error.message);
+      console.error(`[ERROR] Build script failed for ${componentName}:`, error.message);
       // Fall back to standard template replacement
     }
   }
@@ -128,6 +128,7 @@ function buildPage(pageConfig, pageFileName) {
   const componentMap = {}; // Store components by name for placeholder replacement
   
   if (pageConfig.components && pageConfig.components.length > 0) {
+    console.log(`  [COMPONENTS] Building ${pageConfig.components.length} component(s)`);
     for (const comp of pageConfig.components) {
       const componentHtml = buildComponent(comp.name, comp.vars || {});
       // Store in map for later use
@@ -147,7 +148,7 @@ function buildPage(pageConfig, pageFileName) {
   if (fs.existsSync(htmlFilePath)) {
     // Load content from separate HTML file
     htmlContent = fs.readFileSync(htmlFilePath, 'utf8');
-    console.log(`   📄 Loaded content from ${htmlFileName}`);
+    console.log(`  [CONTENT] Loaded from ${htmlFileName}`);
   } else if (pageConfig.content) {
     // Use inline content from JSON
     htmlContent = pageConfig.content;
@@ -195,23 +196,28 @@ function buildPage(pageConfig, pageFileName) {
 }
 
 // Main build process
-console.log('🚀 Starting website build...\n');
+const buildStartTime = Date.now();
+
+console.log('========================================');
+console.log('Starting website build process...');
+console.log(`Time: ${new Date().toLocaleString()}`);
+console.log('========================================\n');
 
 // Copy assets to build directory
 if (fs.existsSync(ASSETS_DIR)) {
   copyDirectory(ASSETS_DIR, path.join(BUILD_DIR, ASSETS_DIR));
-  console.log(`📦 Copied assets to ${BUILD_DIR}/${ASSETS_DIR}/`);
+  console.log(`[ASSETS] Copied to ${BUILD_DIR}/${ASSETS_DIR}/`);
 }
 
 // Build all pages
 const pageFiles = fs.readdirSync(PAGES_DIR).filter(f => f.endsWith('.json'));
 
 if (pageFiles.length === 0) {
-  console.error('❌ No pages found in pages/ directory');
+  console.error('[ERROR] No pages found in pages/ directory');
   process.exit(1);
 }
 
-console.log(`📄 Building ${pageFiles.length} pages:\n`);
+console.log(`[PAGES] Found ${pageFiles.length} page(s) to build\n`);
 
 pageFiles.forEach(pageFile => {
   try {
@@ -227,12 +233,18 @@ pageFiles.forEach(pageFile => {
     const outputFile = `${pageConfig.page}.html`;
     fs.writeFileSync(path.join(BUILD_DIR, outputFile), html);
     
-    console.log(`✅ ${outputFile} - "${pageConfig.title}"`);
+    console.log(`[BUILD] ${outputFile} - "${pageConfig.title}"`);
   } catch (error) {
-    console.error(`❌ Error building ${pageFile}:`, error.message);
+    console.error(`[ERROR] Failed to build ${pageFile}:`, error.message);
   }
 });
 
-console.log('\n✨ Build complete!');
-console.log(`📦 Website ready in "${BUILD_DIR}" folder`);
-console.log(`🌐 Upload the "${BUILD_DIR}" folder to Netlify Drop`);
+const buildEndTime = Date.now();
+const buildDuration = ((buildEndTime - buildStartTime) / 1000).toFixed(2);
+
+console.log('\n========================================');
+console.log('Build completed successfully');
+console.log(`Output directory: ${BUILD_DIR}/`);
+console.log(`Pages built: ${pageFiles.length}`);
+console.log(`Build time: ${buildDuration}s`);
+console.log('========================================');
