@@ -1,0 +1,70 @@
+{
+  "page": "index",
+  "title": "Home",
+  "description": "Welcome to our website",
+  "header_theme": "dark",
+  "layout": "_layout",
+  "components": [
+    {
+      "name": "hero",
+      "vars": {
+        "HERO_TITLE": "",
+        "HERO_SUBTITLE": "",
+        "HERO_BUTTON_TEXT": "",
+        "HERO_BUTTON_LINK": ""
+      }
+    },
+    {
+      "name": "faq",
+      "vars": {
+        "FAQ_TITLE": "Frequently Asked Questions",
+        "FAQ_SUBTITLE": "Find answers to common questions about our services",
+        "FAQ_ITEMS": [
+          {
+            "question": "How can I buy a fursuit online?",
+            "answer": "To buy a fursuit online from The Hard Fun, contact us through our social media accounts. Send your fursona references or let us know what type of fursuit you are interested in. We will guide you through the ordering process step by step."
+          },
+          {
+            "question": "Do you sell custom fursuits online?",
+            "answer": "Yes. We specialize in selling custom fursuits online, including full fursuits, partial fursuits, fursuit heads, paws, tails, and custom accessories."
+          },
+          {
+            "question": "Is it safe to buy a fursuit online?",
+            "answer": "Yes. We communicate directly with customers, provide clear order details, and confirm all design elements before production begins. Buying a fursuit online from The Hard Fun is transparent and secure."
+          },
+          {
+            "question": "How much does it cost to buy a fursuit online?",
+            "answer": "The price depends on the type of fursuit, complexity of the design, and materials. To receive an accurate price, contact us via social media with your ideas and references."
+          },
+          {
+            "question": "Do you ship fursuits worldwide?",
+            "answer": "Yes, we offer worldwide shipping. Shipping costs and delivery times are discussed during the ordering process when you buy a fursuit online."
+          },
+          {
+            "question": "How long does it take to receive a fursuit after ordering?",
+            "answer": "Production time varies depending on order complexity and queue. After production is complete, shipping time depends on your location. Estimated timelines are provided before you confirm your order."
+          },
+          {
+            "question": "Can I buy a fursuit online if I don’t have a fursona?",
+            "answer": "Yes. You can buy a fursuit online even if you don’t have a finished fursona. We can help you define the design during the ordering process."
+          },
+          {
+            "question": "What payment methods do you accept?",
+            "answer": "Payment methods and terms are discussed individually when you contact us through social media to buy a fursuit online."
+          },
+          {
+            "question": "Will I receive updates during production?",
+            "answer": "Yes. We keep customers informed during key stages of production."
+          },
+          {
+            "question": "How do I contact you to buy a fursuit online?",
+            "answer": "To buy a fursuit online, contact The Hard Fun through our official social media channels. This is the primary way to place an order."
+          }
+        ],
+        "FAQ_CTA_TEXT": "Still have questions? We're here to help!",
+        "FAQ_CTA_LINK": "contact.html",
+        "FAQ_CTA_BUTTON": "Contact Us"
+      }
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "component-website-builder",
+  "version": "1.0.0",
+  "description": "Component-based static website builder",
+  "main": "build.js",
+  "scripts": {
+    "build": "node build.js",
+    "dev": "node build.js && echo 'Build complete. Open build/index.html in your browser.'"
+  },
+  "keywords": ["static-site", "components", "website", "builder"],
+  "author": "",
+  "license": "MIT"
+}

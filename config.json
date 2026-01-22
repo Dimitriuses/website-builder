@@ -1,0 +1,17 @@
+{
+  "site": {
+    "name": "The Hard Fun",
+    "description": "A beautiful website built with components",
+    "url": "https://mywebsite.com",
+    "contact": {
+      "email": "info@mywebsite.com",
+      "phone": "+1 (555) 123-4567"
+    }
+  },
+  "build": {
+    "output_dir": "build",
+    "components_dir": "components",
+    "pages_dir": "pages",
+    "assets_dir": "assets"
+  }
+}
