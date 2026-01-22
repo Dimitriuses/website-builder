@@ -1,0 +1,113 @@
+// Product Pages Build Script
+// Automatically generates a page for each product
+
+const fs = require('fs');
+const path = require('path');
+
+/**
+ * Generate product detail pages
+ * This script is called during the build process to create individual pages for each product
+ */
+function generateProductPages() {
+  const productsDir = 'products';
+  const pagesDir = 'pages';
+  const templateFile = path.join(pagesDir, '_product-detail-template.html');
+  
+  console.log('[PRODUCT-PAGES] Generating individual product pages...');
+  
+  // Check if products directory exists
+  if (!fs.existsSync(productsDir)) {
+    console.log('[PRODUCT-PAGES] No products directory found, skipping...');
+    return [];
+  }
+
+  // Check if template exists
+  if (!fs.existsSync(templateFile)) {
+    console.log('[PRODUCT-PAGES] Template not found, skipping...');
+    return [];
+  }
+
+  // Load the template
+  const template = fs.readFileSync(templateFile, 'utf8');
+
+  // Get all product folders
+  const productFolders = fs.readdirSync(productsDir, { withFileTypes: true })
+    .filter(dirent => dirent.isDirectory())
+    .map(dirent => dirent.name);
+
+  const generatedPages = [];
+
+  productFolders.forEach(folderName => {
+    const productPath = path.join(productsDir, folderName);
+    const configPath = path.join(productPath, 'product.json');
+
+    // Skip if no product.json
+    if (!fs.existsSync(configPath)) {
+      return;
+    }
+
+    try {
+      // Load product configuration
+      const productConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+
+      // Find all images in the folder
+      const files = fs.readdirSync(productPath);
+      const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+      const imageFiles = files.filter(file =>
+        imageExtensions.some(ext => file.toLowerCase().endsWith(ext))
+      );
+
+      if (imageFiles.length === 0) {
+        console.log(`  [WARNING] No images in ${folderName}/`);
+        return;
+      }
+
+      // Main image is the first one
+      const mainImage = `${productsDir}/${folderName}/${imageFiles[0]}`;
+
+      // Generate thumbnail gallery HTML for additional images
+      let thumbnailsHtml = '';
+      if (imageFiles.length > 1) {
+        imageFiles.forEach(imgFile => {
+          const imgPath = `${productsDir}/${folderName}/${imgFile}`;
+          thumbnailsHtml += `
+            <img src="${imgPath}" alt="${productConfig.name}" class="thumbnail-image" onclick="changeMainImage('${imgPath}')">
+          `;
+        });
+      }
+
+      // Create page configuration object
+      const pageConfig = {
+        page: `product-${folderName}`,
+        title: productConfig.name || 'Product',
+        description: productConfig.description || '',
+        layout: '_layout',
+        header_theme: 'light',
+        components: [],
+        content: template
+          .replace(/{{MAIN_IMAGE}}/g, mainImage)
+          .replace(/{{PRODUCT_NAME}}/g, productConfig.name || 'Untitled Product')
+          .replace(/{{PRODUCT_PRICE}}/g, productConfig.price || 'Price not available')
+          .replace(/{{PRODUCT_DESCRIPTION}}/g, productConfig.description || 'No description available')
+          .replace(/{{PRODUCT_DETAILS}}/g, productConfig.details || productConfig.description || 'No additional details available')
+          .replace(/{{THUMBNAIL_IMAGES}}/g, thumbnailsHtml)
+      };
+
+      // Write the page JSON file
+      const pageJsonPath = path.join(pagesDir, `_generated-product-${folderName}.json`);
+      fs.writeFileSync(pageJsonPath, JSON.stringify(pageConfig, null, 2));
+
+      generatedPages.push(pageJsonPath);
+
+      console.log(`  [PRODUCT-PAGES] Generated page for ${folderName}`);
+
+    } catch (error) {
+      console.log(`  [ERROR] Failed to generate page for ${folderName}:`, error.message);
+    }
+  });
+
+  console.log(`[PRODUCT-PAGES] Generated ${generatedPages.length} product page(s)`);
+  return generatedPages;
+}
+
+module.exports = { generateProductPages };

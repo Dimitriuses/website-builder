@@ -73,7 +73,7 @@ function build(vars, loadComponent, replaceVariables) {
             PRODUCT_NAME: productConfig.name || 'Untitled Product',
             PRODUCT_DESCRIPTION: productConfig.description || '',
             PRODUCT_PRICE: productConfig.price || 'Price not available',
-            PRODUCT_LINK: productConfig.link || `product.html?id=${folderName}`,
+            PRODUCT_LINK: `product-${folderName}.html`, // Link to generated product page
             BUTTON_TEXT: buttonText
           };
           

@@ -216,6 +216,33 @@ if (fs.existsSync(PRODUCTS_DIR)) {
   console.log(`[PRODUCTS] Copied to ${BUILD_DIR}/${PRODUCTS_DIR}/`);
 }
 
+// Execute page build scripts (for generating dynamic pages)
+const pageBuildScripts = fs.readdirSync(PAGES_DIR)
+  .filter(f => f.endsWith('.build.js'));
+
+if (pageBuildScripts.length > 0) {
+  console.log(`[PAGE-SCRIPTS] Found ${pageBuildScripts.length} page build script(s)\n`);
+  
+  pageBuildScripts.forEach(scriptFile => {
+    try {
+      const scriptPath = path.resolve(path.join(PAGES_DIR, scriptFile));
+      delete require.cache[scriptPath]; // Clear cache
+      
+      const pageScript = require(scriptPath);
+      
+      // Check for generateProductPages or other generation functions
+      if (pageScript.generateProductPages && typeof pageScript.generateProductPages === 'function') {
+        pageScript.generateProductPages();
+      }
+      
+    } catch (error) {
+      console.error(`[ERROR] Page build script ${scriptFile} failed:`, error.message);
+    }
+  });
+  
+  console.log('');
+}
+
 // Build all pages
 const pageFiles = fs.readdirSync(PAGES_DIR).filter(f => f.endsWith('.json'));
 

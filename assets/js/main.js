@@ -54,3 +54,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 });
+
+// Product detail page - change main image on thumbnail click
+function changeMainImage(imagePath) {
+  const mainImage = document.querySelector('.main-product-image');
+  if (mainImage) {
+    mainImage.src = imagePath;
+  }
+}
