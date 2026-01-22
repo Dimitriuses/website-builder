@@ -83,36 +83,31 @@ function buildComponent(componentName, vars = {}) {
   let componentContent = loadComponent(componentName);
   const allVars = { ...globalVars, ...vars };
   
-  // Special handling for FAQ component with items array
-  if (componentName === 'faq' && vars.FAQ_ITEMS && Array.isArray(vars.FAQ_ITEMS)) {
-    // Generate FAQ items HTML
-    let faqItemsHtml = '';
-    vars.FAQ_ITEMS.forEach((item, index) => {
-      const itemNum = index + 1;
-      faqItemsHtml += `
-          <!-- FAQ Item ${itemNum} -->
-          <div class="accordion-item">
-            <h3 class="accordion-header">
-              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq${itemNum}">
-                <span class="faq-icon me-3">
-                  <img src="assets/images/faq.svg" alt="?" width="24" height="24">
-                </span>
-                ${item.question}
-              </button>
-            </h3>
-            <div id="faq${itemNum}" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-              <div class="accordion-body">
-                ${item.answer}
-              </div>
-            </div>
-          </div>
-`;
-    });
-    
-    // Replace the FAQ_ITEMS placeholder with generated HTML
-    componentContent = componentContent.replace('{{FAQ_ITEMS}}', faqItemsHtml);
+  // Check if component has a custom build script
+  const buildScriptPath = path.join(COMPONENTS_DIR, `${componentName}.build.js`);
+  
+  if (fs.existsSync(buildScriptPath)) {
+    // Component has custom build script - use it
+    try {
+      // Get absolute path for require
+      const absoluteBuildScriptPath = path.resolve(buildScriptPath);
+      
+      // Clear require cache to get fresh version
+      delete require.cache[absoluteBuildScriptPath];
+      
+      const componentBuilder = require(absoluteBuildScriptPath);
+      
+      if (componentBuilder.build && typeof componentBuilder.build === 'function') {
+        // Call the component's build function
+        return componentBuilder.build(allVars, loadComponent, replaceVariables);
+      }
+    } catch (error) {
+      console.error(`❌ Error in build script for ${componentName}:`, error.message);
+      // Fall back to standard template replacement
+    }
   }
   
+  // Standard component (no build script) - just replace variables
   return replaceVariables(componentContent, allVars);
 }
 
