@@ -2,17 +2,9 @@
   "page": "example",
   "title": "Example Page",
   "description": "Example showing both content methods",
+  "header_theme": "dark",
   "layout": "_layout",
   "components": [
-    {
-      "name": "hero",
-      "vars": {
-        "HERO_TITLE": "Example Page",
-        "HERO_SUBTITLE": "Showing different content options",
-        "HERO_BUTTON_TEXT": "Learn More",
-        "HERO_BUTTON_LINK": "#"
-      }
-    },
     {
       "name": "faq",
       "vars": {

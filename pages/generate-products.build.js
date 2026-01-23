@@ -109,7 +109,7 @@ function generateProductPages() {
         title: productConfig.name || 'Product',
         description: productConfig.description || '',
         layout: '_layout',
-        header_theme: 'light',
+        header_theme: 'dark',
         components: [],
         content: template
           .replace(/{{CAROUSEL_SLIDES}}/g, carouselSlidesHtml)
