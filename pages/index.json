@@ -10,8 +10,9 @@
       "vars": {
         "HERO_TITLE": "The Hard Fun",
         "HERO_SUBTITLE": "CRAFTED FOR THE WILD",
-        "HERO_BUTTON_TEXT": "3",
-        "HERO_BUTTON_LINK": "4"
+        "HERO_BG_IMAGE": "assets/images/hero.png",
+        "HERO_HEIGHT": "100vh",
+        "HERO_OVERLAY": "0.45"
       }
     },
     {

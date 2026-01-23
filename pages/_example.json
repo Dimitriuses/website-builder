@@ -6,6 +6,16 @@
   "layout": "_layout",
   "components": [
     {
+      "name": "hero",
+      "vars": {
+        "HERO_TITLE": "Unleash Your Fursona",
+        "HERO_SUBTITLE": " ",
+        "HERO_BG_IMAGE": "assets/images/colontitul.png",
+        "HERO_HEIGHT": "50vh",
+        "HERO_OVERLAY": "0"
+      }
+    },
+    {
       "name": "faq",
       "vars": {
         "FAQ_TITLE": "Frequently Asked Questions",
