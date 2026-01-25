@@ -1,0 +1,29 @@
+{
+  "page": "component-placement-example",
+  "title": "Component Placement Example",
+  "description": "Example showing how to place components in specific locations",
+  "layout": "_layout",
+  "header_theme": "light",
+  "components": [
+    {
+      "name": "faq",
+      "vars": {
+        "FAQ_TITLE": "Common Questions",
+        "FAQ_SUBTITLE": "Everything you need to know",
+        "FAQ_Q1": "How does pricing work?",
+        "FAQ_A1": "We offer flexible pricing plans to suit different needs. Contact us for a custom quote.",
+        "FAQ_Q2": "What's included in the service?",
+        "FAQ_A2": "Our service includes consultation, implementation, training, and ongoing support.",
+        "FAQ_Q3": "How long does it take?",
+        "FAQ_A3": "Most projects are completed within 2-4 weeks, depending on complexity.",
+        "FAQ_Q4": "Do you offer refunds?",
+        "FAQ_A4": "Yes, we offer a 30-day money-back guarantee if you're not satisfied.",
+        "FAQ_Q5": "Can I upgrade later?",
+        "FAQ_A5": "Absolutely! You can upgrade your plan at any time as your needs grow.",
+        "FAQ_CTA_TEXT": "Have more questions?",
+        "FAQ_CTA_LINK": "contact.html",
+        "FAQ_CTA_BUTTON": "Get in Touch"
+      }
+    }
+  ]
+}

@@ -1,39 +1,56 @@
 const fs = require('fs');
 const path = require('path');
 
-// Load configuration
-const config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
+// Configuration
+const COMPONENTS_DIR = 'components';
+const PAGES_DIR = 'pages';
+const BUILD_DIR = 'build';
+const ASSETS_DIR = 'assets';
+const CONFIG_FILE = 'config.json';
 
-// Directories
-const COMPONENTS_DIR = config.build.components_dir;
-const PAGES_DIR = config.build.pages_dir;
-const BUILD_DIR = config.build.output_dir;
-const ASSETS_DIR = config.build.assets_dir;
+// Load site configuration
+const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
 
-// Global variables that can be used in any component
-const globalVars = {
-  SITE_NAME: config.site.name,
-  SITE_DESCRIPTION: config.site.description,
-  SITE_URL: config.site.url,
-  CONTACT_EMAIL: config.site.contact.email,
-  CONTACT_PHONE: config.site.contact.phone,
-  YEAR: new Date().getFullYear().toString()
-};
-
-// Clean and create build directory
-if (fs.existsSync(BUILD_DIR)) {
-  fs.rmSync(BUILD_DIR, { recursive: true });
+// Flatten config for easier variable replacement
+// Support both flat and nested config formats
+function flattenConfig(obj, prefix = '') {
+  const flattened = {};
+  
+  for (const [key, value] of Object.entries(obj)) {
+    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      // Recursively flatten nested objects
+      Object.assign(flattened, flattenConfig(value, prefix + key + '_'));
+    } else {
+      // Use uppercase with prefix for nested keys
+      const flatKey = (prefix + key).toUpperCase();
+      flattened[flatKey] = value;
+    }
+  }
+  
+  return flattened;
 }
-fs.mkdirSync(BUILD_DIR, { recursive: true });
+
+// Create both flat and original config
+const flatConfig = flattenConfig(config);
+
+// Also add common aliases for convenience
+flatConfig.SITE_NAME = flatConfig.SITE_NAME || config.site?.name || 'My Website';
+flatConfig.SITE_DESCRIPTION = flatConfig.SITE_DESCRIPTION || config.site?.description || '';
+flatConfig.SITE_URL = flatConfig.SITE_URL || config.site?.url || '';
+flatConfig.CONTACT_EMAIL = flatConfig.CONTACT_EMAIL || config.site?.contact?.email || '';
+flatConfig.CONTACT_PHONE = flatConfig.CONTACT_PHONE || config.site?.contact?.phone || '';
+flatConfig.YEAR = flatConfig.YEAR || new Date().getFullYear().toString();
+flatConfig.COMPANY_NAME = flatConfig.COMPANY_NAME || flatConfig.SITE_NAME;
 
 // Helper function to copy directory recursively
 function copyDirectory(src, dest) {
-  if (!fs.existsSync(src)) return;
+  if (!fs.existsSync(dest)) {
+    fs.mkdirSync(dest, { recursive: true });
+  }
   
-  fs.mkdirSync(dest, { recursive: true });
   const entries = fs.readdirSync(src, { withFileTypes: true });
   
-  for (let entry of entries) {
+  for (const entry of entries) {
     const srcPath = path.join(src, entry.name);
     const destPath = path.join(dest, entry.name);
     
@@ -45,169 +62,255 @@ function copyDirectory(src, dest) {
   }
 }
 
-// Load a component file
+// Helper function to load component from folder structure
 function loadComponent(componentName) {
-  const componentPath = path.join(COMPONENTS_DIR, `${componentName}.html`);
+  // Handle sub-components (e.g., faqItem, productCard)
+  // These are stored in the parent component's folder
+  const subComponentMappings = {
+    'faqItem': 'faq',
+    'productCard': 'products',
+    'header-light': 'header',
+    'header-dark': 'header'
+  };
   
-  if (!fs.existsSync(componentPath)) {
-    console.warn(`[WARNING] Component not found: ${componentName}`);
-    return '';
+  let componentDir;
+  let fileName = componentName;
+  
+  if (subComponentMappings[componentName]) {
+    // Sub-component - look in parent folder
+    componentDir = path.join(COMPONENTS_DIR, subComponentMappings[componentName]);
+  } else {
+    // Regular component
+    componentDir = path.join(COMPONENTS_DIR, componentName);
   }
   
-  return fs.readFileSync(componentPath, 'utf8');
+  // Try with exact filename first
+  let componentFile = path.join(componentDir, `${fileName}.html`);
+  
+  if (fs.existsSync(componentFile)) {
+    return fs.readFileSync(componentFile, 'utf8');
+  }
+  
+  // Try without folder (for layout)
+  componentFile = path.join(COMPONENTS_DIR, `${componentName}.html`);
+  if (fs.existsSync(componentFile)) {
+    return fs.readFileSync(componentFile, 'utf8');
+  }
+  
+  throw new Error(`Component not found: ${componentName}`);
 }
 
-// Replace variables in a string
-function replaceVariables(content, vars) {
-  let result = content;
+// Helper function to replace variables in template
+function replaceVariables(template, vars) {
+  let result = template;
   
-  // Replace all variables in the format {{VAR_NAME}}
-  for (const [key, value] of Object.entries(vars)) {
-    const regex = new RegExp(`{{${key}}}`, 'g');
-    
-    // Check if value is an array (for repeating sections)
+  Object.entries(vars).forEach(([key, value]) => {
+    // Skip arrays - they should be handled by component build scripts
     if (Array.isArray(value)) {
-      // For arrays, we'll handle them specially in components
-      // For now, just skip them in basic replacement
-      continue;
+      return;
     }
     
-    result = result.replace(regex, value || '');
-  }
+    const placeholder = `{{${key}}}`;
+    const regex = new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+    result = result.replace(regex, value);
+  });
   
   return result;
 }
 
-// Build a component with variables
+// Function to build a single component
 function buildComponent(componentName, vars = {}) {
-  let componentContent = loadComponent(componentName);
-  const allVars = { ...globalVars, ...vars };
-  
-  // Check if component has a custom build script
-  const buildScriptPath = path.join(COMPONENTS_DIR, `${componentName}.build.js`);
+  // Check if component has a build script
+  const componentDir = path.join(COMPONENTS_DIR, componentName);
+  const buildScriptPath = path.join(componentDir, `${componentName}.build.js`);
   
   if (fs.existsSync(buildScriptPath)) {
-    // Component has custom build script - use it
-    try {
-      // Get absolute path for require
-      const absoluteBuildScriptPath = path.resolve(buildScriptPath);
-      
-      // Clear require cache to get fresh version
-      delete require.cache[absoluteBuildScriptPath];
-      
-      const componentBuilder = require(absoluteBuildScriptPath);
-      
-      if (componentBuilder.build && typeof componentBuilder.build === 'function') {
-        // Call the component's build function
-        return componentBuilder.build(allVars, loadComponent, replaceVariables);
-      }
-    } catch (error) {
-      console.error(`[ERROR] Build script failed for ${componentName}:`, error.message);
-      // Fall back to standard template replacement
-    }
+    // Component has custom build logic
+    const absolutePath = path.resolve(buildScriptPath);
+    delete require.cache[absolutePath]; // Clear cache to allow rebuilds
+    
+    const buildScript = require(absolutePath);
+    return buildScript.build(vars, loadComponent, replaceVariables);
   }
   
-  // Standard component (no build script) - just replace variables
-  return replaceVariables(componentContent, allVars);
+  // Standard template replacement
+  const template = loadComponent(componentName);
+  return replaceVariables(template, vars);
 }
 
-// Build a complete page
-function buildPage(pageConfig, pageFileName) {
+// Function to build a page
+function buildPage(pageConfig, pageName) {
+  const pageData = typeof pageConfig === 'string' 
+    ? JSON.parse(fs.readFileSync(pageConfig, 'utf8'))
+    : pageConfig;
+  
   // Load layout
-  const layout = loadComponent(pageConfig.layout || '_layout');
+  const layout = loadComponent(pageData.layout || '_layout');
   
-  // Build header (use custom header if specified, otherwise use default)
-  const headerComponent = pageConfig.header || 'header';
-  const navbarStyle = pageConfig.header_theme || pageConfig.navbar_style || 'light';
-  const header = buildComponent(headerComponent, { NAVBAR_STYLE: navbarStyle });
+  // Build components
+  let componentsHtml = '';
+  const usedComponents = new Set(); // Track which components have been placed
   
-  // Build footer (always included)
-  const footer = buildComponent('footer');
+  // Check for component placeholders in HTML content
+  let contentHtml = '';
+  if (pageData.content_file) {
+    const pageDir = path.dirname(pageConfig);
+    const contentPath = path.join(pageDir, pageData.content_file);
+    contentHtml = fs.existsSync(contentPath) ? fs.readFileSync(contentPath, 'utf8') : '';
+  } else if (pageData.content) {
+    contentHtml = pageData.content;
+  }
   
-  // Build custom components for this page
-  const componentMap = {}; // Store components by name for placeholder replacement
-  
-  if (pageConfig.components && pageConfig.components.length > 0) {
-    console.log(`  [COMPONENTS] Building ${pageConfig.components.length} component(s)`);
-    for (const comp of pageConfig.components) {
+  if (pageData.components && pageData.components.length > 0) {
+    console.log(`  [COMPONENTS] Building ${pageData.components.length} component(s)`);
+    
+    pageData.components.forEach(comp => {
       const componentHtml = buildComponent(comp.name, comp.vars || {});
-      // Store in map for later use
-      componentMap[comp.name] = componentHtml;
+      
+      // Check if component has a placeholder in content
+      const placeholder = `{{COMPONENT:${comp.name}}}`;
+      
+      if (contentHtml.includes(placeholder)) {
+        // Replace placeholder with component
+        contentHtml = contentHtml.replace(placeholder, componentHtml);
+        usedComponents.add(comp.name);
+      } else if (!usedComponents.has(comp.name)) {
+        // No placeholder found and not used yet - add to top
+        componentsHtml += componentHtml + '\n';
+        usedComponents.add(comp.name);
+      }
+    });
+  }
+  
+  // Load content HTML if specified
+  if (pageData.content_file && !contentHtml) {
+    const pageDir = path.dirname(pageConfig);
+    const contentPath = path.join(pageDir, pageData.content_file);
+    if (fs.existsSync(contentPath)) {
+      contentHtml = fs.readFileSync(contentPath, 'utf8');
+      console.log(`  [CONTENT] Loaded from ${pageData.content_file}`);
     }
   }
   
-  // Load content from separate HTML file or inline from JSON
-  let mainContent = '';
-  let htmlContent = '';
-  const usedComponents = new Set(); // Track which components are used in placeholders
+  // Combine components and content
+  const mainContent = componentsHtml + contentHtml;
   
-  // Check if there's a separate HTML file for content
-  const htmlFileName = pageFileName.replace('.json', '.html');
-  const htmlFilePath = path.join(PAGES_DIR, htmlFileName);
+  // Build header based on theme
+  const headerMode = pageData.header_theme || 'light';
+  const headerTemplate = headerMode === 'dark' ? 'header-dark' : 'header-light';
+  const headerHtml = buildComponent(headerTemplate, flatConfig);
   
-  if (fs.existsSync(htmlFilePath)) {
-    // Load content from separate HTML file
-    htmlContent = fs.readFileSync(htmlFilePath, 'utf8');
-    console.log(`  [CONTENT] Loaded from ${htmlFileName}`);
-  } else if (pageConfig.content) {
-    // Use inline content from JSON
-    htmlContent = pageConfig.content;
-  }
+  // Build footer
+  const footerHtml = buildComponent('footer', flatConfig);
   
-  // Find which components are used as placeholders in the HTML
-  for (const name of Object.keys(componentMap)) {
-    const placeholder = `{{COMPONENT:${name}}}`;
-    if (htmlContent.includes(placeholder)) {
-      usedComponents.add(name);
-    }
-  }
+  // Collect all CSS files
+  const cssFiles = collectComponentCSS(pageData.components || []);
+  const cssLinks = cssFiles.map(file => 
+    `  <link href="${file}" rel="stylesheet">`
+  ).join('\n');
   
-  // Add components that are NOT used as placeholders to the top
-  for (const [name, html] of Object.entries(componentMap)) {
-    if (!usedComponents.has(name)) {
-      mainContent += html;
-    }
-  }
-  
-  // Now replace component placeholders in HTML content
-  for (const [name, html] of Object.entries(componentMap)) {
-    const placeholder = `{{COMPONENT:${name}}}`;
-    htmlContent = htmlContent.replace(new RegExp(placeholder, 'g'), html);
-  }
-  
-  // Add the HTML content after the auto-placed components
-  mainContent += htmlContent;
-  
-  // Page-specific variables
+  // Replace layout variables
   const pageVars = {
-    ...globalVars,
-    PAGE_TITLE: pageConfig.title,
-    PAGE_DESCRIPTION: pageConfig.description,
-    HEADER_MODE: pageConfig.header_theme || 'light', // 'light' or 'dark'
-    HEADER: header,
-    FOOTER: footer,
+    ...flatConfig,  // Spread flatConfig FIRST so it can be overridden
+    PAGE_TITLE: pageData.title || flatConfig.SITE_NAME,
+    PAGE_DESCRIPTION: pageData.description || flatConfig.SITE_DESCRIPTION,
+    SITE_NAME: flatConfig.SITE_NAME,
+    HEADER: headerHtml,
     CONTENT: mainContent,
-    HEAD_EXTRA: pageConfig.head_extra || '',
-    BODY_EXTRA: pageConfig.body_extra || ''
+    FOOTER: footerHtml,
+    HEADER_MODE: headerMode,
+    HEAD_EXTRA: cssLinks,
+    BODY_EXTRA: ''
   };
   
-  // Replace all variables in layout
-  return replaceVariables(layout, pageVars);
+  const finalHtml = replaceVariables(layout, pageVars);
+  
+  // Write output
+  const outputFile = path.join(BUILD_DIR, `${pageData.page}.html`);
+  fs.writeFileSync(outputFile, finalHtml);
+  
+  console.log(`[BUILD] ${pageData.page}.html - "${pageData.title}"`);
+}
+
+// Function to collect CSS files for components
+function collectComponentCSS(components) {
+  const cssFiles = ['assets/css/global.css']; // Always include global
+  const addedComponents = new Set();
+  
+  // Add CSS for header and footer (always present)
+  cssFiles.push('assets/css/header.css');
+  cssFiles.push('assets/css/footer.css');
+  addedComponents.add('header');
+  addedComponents.add('footer');
+  
+  // Add CSS for each component used
+  if (components) {
+    components.forEach(comp => {
+      if (!addedComponents.has(comp.name)) {
+        const componentDir = path.join(COMPONENTS_DIR, comp.name);
+        const cssFile = path.join(componentDir, 'style.css');
+        
+        if (fs.existsSync(cssFile)) {
+          cssFiles.push(`assets/css/${comp.name}.css`);
+          addedComponents.add(comp.name);
+        }
+      }
+    });
+  }
+  
+  return cssFiles;
+}
+
+// Function to copy component CSS to build
+function copyComponentCSS() {
+  const buildCSSDir = path.join(BUILD_DIR, 'assets', 'css');
+  
+  // Ensure CSS directory exists
+  if (!fs.existsSync(buildCSSDir)) {
+    fs.mkdirSync(buildCSSDir, { recursive: true });
+  }
+  
+  // Copy global CSS
+  const globalCSS = path.join(ASSETS_DIR, 'css', 'global.css');
+  if (fs.existsSync(globalCSS)) {
+    fs.copyFileSync(globalCSS, path.join(buildCSSDir, 'global.css'));
+  }
+  
+  // Copy component CSS
+  const componentsWithCSS = fs.readdirSync(COMPONENTS_DIR, { withFileTypes: true })
+    .filter(dirent => dirent.isDirectory())
+    .map(dirent => dirent.name);
+  
+  componentsWithCSS.forEach(compName => {
+    const cssFile = path.join(COMPONENTS_DIR, compName, 'style.css');
+    if (fs.existsSync(cssFile)) {
+      fs.copyFileSync(cssFile, path.join(buildCSSDir, `${compName}.css`));
+    }
+  });
 }
 
 // Main build process
-const buildStartTime = Date.now();
-
 console.log('========================================');
 console.log('Starting website build process...');
 console.log(`Time: ${new Date().toLocaleString()}`);
 console.log('========================================\n');
 
-// Copy assets to build directory
-if (fs.existsSync(ASSETS_DIR)) {
-  copyDirectory(ASSETS_DIR, path.join(BUILD_DIR, ASSETS_DIR));
-  console.log(`[ASSETS] Copied to ${BUILD_DIR}/${ASSETS_DIR}/`);
+const buildStart = Date.now();
+
+// Clean build directory
+if (fs.existsSync(BUILD_DIR)) {
+  fs.rmSync(BUILD_DIR, { recursive: true });
 }
+fs.mkdirSync(BUILD_DIR, { recursive: true });
+
+// Copy assets (excluding CSS which we handle separately)
+copyDirectory(path.join(ASSETS_DIR, 'js'), path.join(BUILD_DIR, ASSETS_DIR, 'js'));
+copyDirectory(path.join(ASSETS_DIR, 'images'), path.join(BUILD_DIR, ASSETS_DIR, 'images'));
+console.log(`[ASSETS] Copied to ${BUILD_DIR}/${ASSETS_DIR}/`);
+
+// Copy component CSS
+copyComponentCSS();
+console.log(`[CSS] Component styles copied to ${BUILD_DIR}/${ASSETS_DIR}/css/\n`);
 
 // Copy products to build directory
 const PRODUCTS_DIR = 'products';
@@ -217,68 +320,72 @@ if (fs.existsSync(PRODUCTS_DIR)) {
 }
 
 // Execute page build scripts (for generating dynamic pages)
-const pageBuildScripts = fs.readdirSync(PAGES_DIR)
-  .filter(f => f.endsWith('.build.js'));
+const generatorsDir = path.join(PAGES_DIR, '_generators');
+if (fs.existsSync(generatorsDir)) {
+  const pageBuildScripts = fs.readdirSync(generatorsDir)
+    .filter(f => f.endsWith('.build.js'));
 
-if (pageBuildScripts.length > 0) {
-  console.log(`[PAGE-SCRIPTS] Found ${pageBuildScripts.length} page build script(s)\n`);
-  
-  pageBuildScripts.forEach(scriptFile => {
-    try {
-      const scriptPath = path.resolve(path.join(PAGES_DIR, scriptFile));
-      delete require.cache[scriptPath]; // Clear cache
-      
-      const pageScript = require(scriptPath);
-      
-      // Check for generateProductPages or other generation functions
-      if (pageScript.generateProductPages && typeof pageScript.generateProductPages === 'function') {
-        pageScript.generateProductPages();
+  if (pageBuildScripts.length > 0) {
+    console.log(`[PAGE-SCRIPTS] Found ${pageBuildScripts.length} page build script(s)\n`);
+    
+    pageBuildScripts.forEach(scriptFile => {
+      try {
+        const scriptPath = path.resolve(path.join(generatorsDir, scriptFile));
+        delete require.cache[scriptPath];
+        
+        const pageScript = require(scriptPath);
+        
+        if (pageScript.generateProductPages && typeof pageScript.generateProductPages === 'function') {
+          pageScript.generateProductPages();
+        }
+        
+      } catch (error) {
+        console.error(`[ERROR] Page build script ${scriptFile} failed:`, error.message);
       }
-      
-    } catch (error) {
-      console.error(`[ERROR] Page build script ${scriptFile} failed:`, error.message);
-    }
-  });
-  
-  console.log('');
+    });
+    
+    console.log('');
+  }
 }
 
 // Build all pages
-const pageFiles = fs.readdirSync(PAGES_DIR).filter(f => f.endsWith('.json'));
+const pageFiles = [];
 
-if (pageFiles.length === 0) {
-  console.error('[ERROR] No pages found in pages/ directory');
-  process.exit(1);
+// Recursively find all .json files in pages directory
+function findPageFiles(dir) {
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  
+  entries.forEach(entry => {
+    const fullPath = path.join(dir, entry.name);
+    
+    if (entry.isDirectory()) {
+      findPageFiles(fullPath);
+    } else if (entry.name.endsWith('.json')) {
+      pageFiles.push(fullPath);
+    }
+  });
 }
+
+findPageFiles(PAGES_DIR);
 
 console.log(`[PAGES] Found ${pageFiles.length} page(s) to build\n`);
 
+let pagesBuilt = 0;
 pageFiles.forEach(pageFile => {
   try {
-    // Load page configuration
-    const pageConfig = JSON.parse(
-      fs.readFileSync(path.join(PAGES_DIR, pageFile), 'utf8')
-    );
-    
-    // Build the page HTML
-    const html = buildPage(pageConfig, pageFile);
-    
-    // Write to build directory
-    const outputFile = `${pageConfig.page}.html`;
-    fs.writeFileSync(path.join(BUILD_DIR, outputFile), html);
-    
-    console.log(`[BUILD] ${outputFile} - "${pageConfig.title}"`);
+    const pageName = path.basename(pageFile, '.json');
+    buildPage(pageFile, pageName);
+    pagesBuilt++;
   } catch (error) {
     console.error(`[ERROR] Failed to build ${pageFile}:`, error.message);
   }
 });
 
-const buildEndTime = Date.now();
-const buildDuration = ((buildEndTime - buildStartTime) / 1000).toFixed(2);
+const buildTime = ((Date.now() - buildStart) / 1000).toFixed(2);
 
 console.log('\n========================================');
 console.log('Build completed successfully');
 console.log(`Output directory: ${BUILD_DIR}/`);
-console.log(`Pages built: ${pageFiles.length}`);
-console.log(`Build time: ${buildDuration}s`);
-console.log('========================================');
+console.log(`Pages built: ${pagesBuilt}`);
+console.log(`Build time: ${buildTime}s`);
+console.log('========================================\n');

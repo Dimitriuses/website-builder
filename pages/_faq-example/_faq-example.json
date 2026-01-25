@@ -1,0 +1,29 @@
+{
+  "page": "faq-example",
+  "title": "FAQ Example",
+  "description": "Frequently Asked Questions",
+  "layout": "_layout",
+  "header_theme": "light",
+  "components": [
+    {
+      "name": "faq",
+      "vars": {
+        "FAQ_TITLE": "Frequently Asked Questions",
+        "FAQ_SUBTITLE": "Find answers to common questions about our services",
+        "FAQ_Q1": "How do I get started?",
+        "FAQ_A1": "Getting started is easy! Simply sign up for an account, complete your profile, and you'll be ready to go. Our onboarding process takes less than 5 minutes.",
+        "FAQ_Q2": "What payment methods do you accept?",
+        "FAQ_A2": "We accept all major credit cards (Visa, MasterCard, American Express), PayPal, and bank transfers. All payments are processed securely through our encrypted payment gateway.",
+        "FAQ_Q3": "Can I cancel my subscription at any time?",
+        "FAQ_A3": "Yes, you can cancel your subscription at any time from your account settings. There are no cancellation fees, and you'll continue to have access until the end of your current billing period.",
+        "FAQ_Q4": "Do you offer customer support?",
+        "FAQ_A4": "We offer 24/7 customer support via email and live chat. Our dedicated support team typically responds within 2-4 hours. Premium plan members also get priority phone support.",
+        "FAQ_Q5": "Is my data secure?",
+        "FAQ_A5": "Absolutely! We use industry-standard SSL encryption to protect your data. All information is stored on secure servers with regular backups. We are also GDPR compliant and never share your data with third parties.",
+        "FAQ_CTA_TEXT": "Still have questions? We're here to help!",
+        "FAQ_CTA_LINK": "contact.html",
+        "FAQ_CTA_BUTTON": "Contact Us"
+      }
+    }
+  ]
+}

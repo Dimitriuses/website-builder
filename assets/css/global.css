@@ -1,0 +1,30 @@
+/* Custom styles for your website */
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.6;
+  /* Add padding to prevent content from hiding under fixed header */
+  padding-top: 76px;
+}
+
+
+/* Utility classes */
+.section-padding {
+  padding: 60px 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  body {
+    padding-top: 66px;
+  }
+  
+  .hero {
+    padding: 60px 0;
+  }
+  
+  .hero h1 {
+    font-size: 2rem;
+  }
+}
+
