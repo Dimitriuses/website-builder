@@ -153,12 +153,26 @@ function buildPage(pageConfig, pageName) {
   
   // Check for component placeholders in HTML content
   let contentHtml = '';
+  
+  // Try to load content from various sources
   if (pageData.content_file) {
+    // Explicit content_file specified
     const pageDir = path.dirname(pageConfig);
     const contentPath = path.join(pageDir, pageData.content_file);
-    contentHtml = fs.existsSync(contentPath) ? fs.readFileSync(contentPath, 'utf8') : '';
+    if (fs.existsSync(contentPath)) {
+      contentHtml = fs.readFileSync(contentPath, 'utf8');
+    }
   } else if (pageData.content) {
+    // Inline content in JSON
     contentHtml = pageData.content;
+  } else {
+    // Auto-detect: look for HTML file with same name as page
+    const pageDir = path.dirname(pageConfig);
+    const autoContentPath = path.join(pageDir, `${pageData.page}.html`);
+    if (fs.existsSync(autoContentPath)) {
+      contentHtml = fs.readFileSync(autoContentPath, 'utf8');
+      console.log(`  [CONTENT] Auto-loaded from ${pageData.page}.html`);
+    }
   }
   
   if (pageData.components && pageData.components.length > 0) {
@@ -180,16 +194,6 @@ function buildPage(pageConfig, pageName) {
         usedComponents.add(comp.name);
       }
     });
-  }
-  
-  // Load content HTML if specified
-  if (pageData.content_file && !contentHtml) {
-    const pageDir = path.dirname(pageConfig);
-    const contentPath = path.join(pageDir, pageData.content_file);
-    if (fs.existsSync(contentPath)) {
-      contentHtml = fs.readFileSync(contentPath, 'utf8');
-      console.log(`  [CONTENT] Loaded from ${pageData.content_file}`);
-    }
   }
   
   // Combine components and content
