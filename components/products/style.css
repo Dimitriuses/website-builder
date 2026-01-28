@@ -1,6 +1,6 @@
 /* Products Component Styles */
 .products-section {
-  background-color: #fff;
+  /* background-color:  rgba(33,37,41,1); */
 }
 
 .product-card {
@@ -8,6 +8,7 @@
   border-radius: 8px;
   transition: all 0.3s ease;
   overflow: hidden;
+  background-color: #013440;
 }
 
 .product-card:hover {
@@ -87,13 +88,13 @@
 .product-name {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #333;
+  color: #cccccc;
   margin-bottom: 0.5rem;
 }
 
 .product-description {
   font-size: 0.95rem;
-  color: #666;
+  color: #999999;
   line-height: 1.5;
 }
 
@@ -176,7 +177,7 @@
 .product-detail-title {
   font-size: 2rem;
   font-weight: bold;
-  color: #333;
+  color: #ccc;
   margin-bottom: 1rem;
 }
 
@@ -188,7 +189,7 @@
 }
 
 .product-detail-description {
-  color: #666;
+  color: #999;
   line-height: 1.8;
 }
 
@@ -198,63 +199,10 @@
 }
 
 .nav-tabs .nav-link {
-  color: #666;
+  color: #999;
 }
 
 .nav-tabs .nav-link.active {
   color: #667eea;
   font-weight: 600;
-}
-
-.accordion-button {
-  font-size: 1.1rem;
-  font-weight: 500;
-  padding: 1.25rem 1.5rem;
-  background-color: #fff;
-  border: none;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.accordion-button:not(.collapsed) {
-  background-color: #fff;
-  color: #667eea;
-  box-shadow: none;
-}
-
-.accordion-button:not(.collapsed) .faq-icon {
-  transform: rotate(180deg);
-}
-
-.accordion-button:focus {
-  box-shadow: none;
-  border-color: transparent;
-}
-
-.accordion-button::after {
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23667eea'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
-}
-
-.accordion-item {
-  border: none;
-  margin-bottom: 1rem;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.accordion-body {
-  padding: 1.5rem;
-  font-size: 1rem;
-  line-height: 1.7;
-  color: #666;
-  background-color: #fff;
-}
-
-.faq-section .display-5 {
-  color: #333;
-  margin-bottom: 0.5rem;
-}
-
-.faq-section .lead {
-  font-size: 1.15rem;
 }

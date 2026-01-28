@@ -197,8 +197,8 @@ function buildPage(pageConfig, pageName) {
   
   // Build header based on theme
   const headerMode = pageData.header_theme || 'light';
-  const headerTemplate = headerMode === 'dark' ? 'header-dark' : 'header-light';
-  const headerHtml = buildComponent(headerTemplate, flatConfig);
+  // const headerTemplate = headerMode === 'dark' ? 'header-dark' : 'header-light';
+  const headerHtml = buildComponent("header", flatConfig);
   
   // Build footer
   const footerHtml = buildComponent('footer', flatConfig);

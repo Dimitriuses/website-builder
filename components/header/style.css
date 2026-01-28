@@ -47,7 +47,7 @@
   color: rgba(0, 0, 0, 0.9) !important;
 }
 
-/* Header when scrolled - always switches to solid white with dark text */
+/* Header when scrolled - always switches to solid dark with light text */
 #mainNav.scrolled {
   background-color: rgba(0, 0, 0, 0.98) !important;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
