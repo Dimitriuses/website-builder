@@ -213,6 +213,12 @@ function buildPage(pageConfig, pageName) {
     `  <link href="${file}" rel="stylesheet">`
   ).join('\n');
   
+  // Collect all JavaScript files (including page-specific)
+  const jsFiles = collectComponentJS(pageData.components || [], pageData.page);
+  const jsScripts = jsFiles.map(file =>
+    `  <script src="${file}"></script>`
+  ).join('\n');
+  
   // Replace layout variables
   const pageVars = {
     ...flatConfig,  // Spread flatConfig FIRST so it can be overridden
@@ -224,7 +230,7 @@ function buildPage(pageConfig, pageName) {
     FOOTER: footerHtml,
     HEADER_MODE: headerMode,
     HEAD_EXTRA: cssLinks,
-    BODY_EXTRA: ''
+    BODY_EXTRA: jsScripts
   };
   
   const finalHtml = replaceVariables(layout, pageVars);
@@ -287,6 +293,54 @@ function collectComponentCSS(components, pageName) {
   return cssFiles;
 }
 
+// Function to collect JavaScript files for components and pages
+function collectComponentJS(components, pageName) {
+  const jsFiles = ['assets/js/global.js']; // Always include global utilities
+  const addedComponents = new Set();
+  
+  // Add JS for header (always present)
+  jsFiles.push('assets/js/header.js');
+  addedComponents.add('header');
+  
+  // Add JS for each component used
+  if (components) {
+    components.forEach(comp => {
+      if (!addedComponents.has(comp.name)) {
+        const componentDir = path.join(COMPONENTS_DIR, comp.name);
+        const jsFile = path.join(componentDir, 'script.js');
+        
+        if (fs.existsSync(jsFile)) {
+          jsFiles.push(`assets/js/${comp.name}.js`);
+          addedComponents.add(comp.name);
+        }
+      }
+    });
+  }
+  
+  // Add page-specific JS if it exists
+  if (pageName) {
+    // Check for page-specific JS in pages folder structure
+    const pageFolders = [
+      path.join(PAGES_DIR, pageName),
+      path.join(PAGES_DIR, '_generators'),
+      // Handle generated product pages
+      pageName.startsWith('product-') ? path.join(PAGES_DIR, '_product-detail') : null
+    ].filter(Boolean);
+    
+    for (const pageFolder of pageFolders) {
+      const pageJsFile = path.join(pageFolder, 'script.js');
+      if (fs.existsSync(pageJsFile)) {
+        // Use page name for the JS file in build
+        const jsFileName = pageName.startsWith('product-') ? 'product-detail' : pageName;
+        jsFiles.push(`assets/js/pages/${jsFileName}.js`);
+        break;
+      }
+    }
+  }
+  
+  return jsFiles;
+}
+
 // Function to copy component CSS to build
 function copyComponentCSS() {
   const buildCSSDir = path.join(BUILD_DIR, 'assets', 'css');
@@ -339,6 +393,58 @@ function copyComponentCSS() {
   copyPageCSS(PAGES_DIR);
 }
 
+// Function to copy component JavaScript to build
+function copyComponentJS() {
+  const buildJSDir = path.join(BUILD_DIR, 'assets', 'js');
+  const buildPagesJSDir = path.join(BUILD_DIR, 'assets', 'js', 'pages');
+  
+  // Ensure JS directories exist
+  if (!fs.existsSync(buildJSDir)) {
+    fs.mkdirSync(buildJSDir, { recursive: true });
+  }
+  if (!fs.existsSync(buildPagesJSDir)) {
+    fs.mkdirSync(buildPagesJSDir, { recursive: true });
+  }
+  
+  // Copy global JS
+  const globalJS = path.join(ASSETS_DIR, 'js', 'global.js');
+  if (fs.existsSync(globalJS)) {
+    fs.copyFileSync(globalJS, path.join(buildJSDir, 'global.js'));
+  }
+  
+  // Copy component JS
+  const componentsWithJS = fs.readdirSync(COMPONENTS_DIR, { withFileTypes: true })
+    .filter(dirent => dirent.isDirectory())
+    .map(dirent => dirent.name);
+  
+  componentsWithJS.forEach(compName => {
+    const jsFile = path.join(COMPONENTS_DIR, compName, 'script.js');
+    if (fs.existsSync(jsFile)) {
+      fs.copyFileSync(jsFile, path.join(buildJSDir, `${compName}.js`));
+    }
+  });
+  
+  // Copy page-specific JS
+  function copyPageJS(dir) {
+    if (!fs.existsSync(dir)) return;
+    
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    
+    entries.forEach(entry => {
+      if (entry.isDirectory()) {
+        const pageJSFile = path.join(dir, entry.name, 'script.js');
+        if (fs.existsSync(pageJSFile)) {
+          // For _product-detail, name it product-detail.js
+          const jsFileName = entry.name.replace(/^_/, '') + '.js';
+          fs.copyFileSync(pageJSFile, path.join(buildPagesJSDir, jsFileName));
+        }
+      }
+    });
+  }
+  
+  copyPageJS(PAGES_DIR);
+}
+
 // Main build process
 console.log('========================================');
 console.log('Starting website build process...');
@@ -353,14 +459,16 @@ if (fs.existsSync(BUILD_DIR)) {
 }
 fs.mkdirSync(BUILD_DIR, { recursive: true });
 
-// Copy assets (excluding CSS which we handle separately)
-copyDirectory(path.join(ASSETS_DIR, 'js'), path.join(BUILD_DIR, ASSETS_DIR, 'js'));
+// Copy assets (excluding CSS and JS which we handle separately)
 copyDirectory(path.join(ASSETS_DIR, 'images'), path.join(BUILD_DIR, ASSETS_DIR, 'images'));
-console.log(`[ASSETS] Copied to ${BUILD_DIR}/${ASSETS_DIR}/`);
+console.log(`[ASSETS] Copied images to ${BUILD_DIR}/${ASSETS_DIR}/`);
 
-// Copy component CSS
+// Copy component CSS and JS
 copyComponentCSS();
-console.log(`[CSS] Component styles copied to ${BUILD_DIR}/${ASSETS_DIR}/css/\n`);
+console.log(`[CSS] Component styles copied to ${BUILD_DIR}/${ASSETS_DIR}/css/`);
+
+copyComponentJS();
+console.log(`[JS] Component scripts copied to ${BUILD_DIR}/${ASSETS_DIR}/js/\n`);
 
 // Copy products to build directory
 const PRODUCTS_DIR = 'products';
