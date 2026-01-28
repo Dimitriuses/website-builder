@@ -203,8 +203,8 @@ function buildPage(pageConfig, pageName) {
   // Build footer
   const footerHtml = buildComponent('footer', flatConfig);
   
-  // Collect all CSS files
-  const cssFiles = collectComponentCSS(pageData.components || []);
+  // Collect all CSS files (including page-specific)
+  const cssFiles = collectComponentCSS(pageData.components || [], pageData.page);
   const cssLinks = cssFiles.map(file => 
     `  <link href="${file}" rel="stylesheet">`
   ).join('\n');
@@ -232,8 +232,8 @@ function buildPage(pageConfig, pageName) {
   console.log(`[BUILD] ${pageData.page}.html - "${pageData.title}"`);
 }
 
-// Function to collect CSS files for components
-function collectComponentCSS(components) {
+// Function to collect CSS files for components and pages
+function collectComponentCSS(components, pageName) {
   const cssFiles = ['assets/css/global.css']; // Always include global
   const addedComponents = new Set();
   
@@ -258,16 +258,42 @@ function collectComponentCSS(components) {
     });
   }
   
+  // Add page-specific CSS if it exists
+  if (pageName) {
+    // Check for page-specific CSS in pages folder structure
+    // Try both the page folder and generated pages folder
+    const pageFolders = [
+      path.join(PAGES_DIR, pageName),
+      path.join(PAGES_DIR, '_generators'),
+      // Handle generated product pages (e.g., product-product-001)
+      pageName.startsWith('product-') ? path.join(PAGES_DIR, '_product-detail') : null
+    ].filter(Boolean);
+    
+    for (const pageFolder of pageFolders) {
+      const pageCssFile = path.join(pageFolder, 'style.css');
+      if (fs.existsSync(pageCssFile)) {
+        // Use page name for the CSS file in build
+        const cssFileName = pageName.startsWith('product-') ? 'product-detail' : pageName;
+        cssFiles.push(`assets/css/pages/${cssFileName}.css`);
+        break;
+      }
+    }
+  }
+  
   return cssFiles;
 }
 
 // Function to copy component CSS to build
 function copyComponentCSS() {
   const buildCSSDir = path.join(BUILD_DIR, 'assets', 'css');
+  const buildPagesCSSDir = path.join(BUILD_DIR, 'assets', 'css', 'pages');
   
-  // Ensure CSS directory exists
+  // Ensure CSS directories exist
   if (!fs.existsSync(buildCSSDir)) {
     fs.mkdirSync(buildCSSDir, { recursive: true });
+  }
+  if (!fs.existsSync(buildPagesCSSDir)) {
+    fs.mkdirSync(buildPagesCSSDir, { recursive: true });
   }
   
   // Copy global CSS
@@ -287,6 +313,26 @@ function copyComponentCSS() {
       fs.copyFileSync(cssFile, path.join(buildCSSDir, `${compName}.css`));
     }
   });
+  
+  // Copy page-specific CSS
+  function copyPageCSS(dir) {
+    if (!fs.existsSync(dir)) return;
+    
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    
+    entries.forEach(entry => {
+      if (entry.isDirectory()) {
+        const pageCSSFile = path.join(dir, entry.name, 'style.css');
+        if (fs.existsSync(pageCSSFile)) {
+          // For _product-detail, name it product-detail.css
+          const cssFileName = entry.name.replace(/^_/, '') + '.css';
+          fs.copyFileSync(pageCSSFile, path.join(buildPagesCSSDir, cssFileName));
+        }
+      }
+    });
+  }
+  
+  copyPageCSS(PAGES_DIR);
 }
 
 // Main build process
