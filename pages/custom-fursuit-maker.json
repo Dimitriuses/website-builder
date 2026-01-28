@@ -1,0 +1,29 @@
+{
+  "page": "custom-fursuit-maker",
+  "title": "",
+  "description": "",
+  "header_theme": "dark",
+  "layout": "_layout",
+  "components": [
+    {
+      "name": "hero",
+      "vars": {
+        "HERO_TITLE": "Unleash Your Fursona",
+        "HERO_SUBTITLE": " ",
+        "HERO_BG_IMAGE": "assets/images/colontitul.png",
+        "HERO_HEIGHT": "50vh",
+        "HERO_OVERLAY": "0"
+      }
+    },
+    {
+      "name": "products",
+      "vars": {
+        "PRODUCTS_TITLE": "Our Products",
+        "PRODUCTS_SUBTITLE": "Discover our premium collection",
+        "PRODUCTS_DIR": "custom",
+        "BUTTON_TEXT": "View Details"
+      }
+    }
+    
+  ]
+}
