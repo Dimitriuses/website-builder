@@ -477,6 +477,13 @@ if (fs.existsSync(PRODUCTS_DIR)) {
   console.log(`[PRODUCTS] Copied to ${BUILD_DIR}/${PRODUCTS_DIR}/`);
 }
 
+// Copy custom to build directory
+const CUSTOM_DIR = 'custom';
+if (fs.existsSync(CUSTOM_DIR)) {
+  copyDirectory(CUSTOM_DIR, path.join(BUILD_DIR, CUSTOM_DIR));
+  console.log(`[CUSTOM] Copied to ${BUILD_DIR}/${CUSTOM_DIR}/`);
+}
+
 // Execute page build scripts (for generating dynamic pages)
 const generatorsDir = path.join(PAGES_DIR, '_generators');
 if (fs.existsSync(generatorsDir)) {

@@ -388,7 +388,7 @@ footer a:hover {
 .product-detail-title {
   font-size: 2rem;
   font-weight: bold;
-  color: #333;
+  color: #ccc;
   margin-bottom: 1rem;
 }
 
@@ -400,7 +400,7 @@ footer a:hover {
 }
 
 .product-detail-description {
-  color: #666;
+  color: #999;
   line-height: 1.8;
 }
 
@@ -410,7 +410,7 @@ footer a:hover {
 }
 
 .nav-tabs .nav-link {
-  color: #666;
+  color: #999;
 }
 
 .nav-tabs .nav-link.active {
