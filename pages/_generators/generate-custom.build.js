@@ -11,7 +11,7 @@ const path = require('path');
 function generateProductPages() {
   const productsDir = 'build/custom';
   const pagesDir = 'pages';
-  const templateFile = path.join(pagesDir, '_custom-detail-template.html');
+  const templateFile = path.join(pagesDir, '_product-detail', '_custom-detail-template.html');
   
   console.log('[CUSTOM-PAGES] Generating individual product pages...');
   
@@ -125,7 +125,7 @@ function generateProductPages() {
       };
 
       // Write the page JSON file
-      const pageJsonPath = path.join(pagesDir, `_generated-product-${folderName}.json`);
+      const pageJsonPath = path.join(pagesDir, '_generators', `_generated-product-${folderName}.json`);
       fs.writeFileSync(pageJsonPath, JSON.stringify(pageConfig, null, 2));
 
       generatedPages.push(pageJsonPath);
