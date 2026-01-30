@@ -9,15 +9,15 @@ const path = require('path');
  * This script is called during the build process to create individual pages for each product
  */
 function generateProductPages() {
-  const productsDir = 'products';
+  const productsDir = 'build/products';  // Read from build directory after collections copied
   const pagesDir = 'pages';
   const templateFile = path.join(pagesDir, '_product-detail', '_product-detail-template.html');
   
   console.log('[PRODUCT-PAGES] Generating individual product pages...');
   
-  // Check if products directory exists
+  // Check if products directory exists in build
   if (!fs.existsSync(productsDir)) {
-    console.log('[PRODUCT-PAGES] No products directory found, skipping...');
+    console.log('[PRODUCT-PAGES] No products directory found in build, skipping...');
     return [];
   }
 
@@ -64,8 +64,10 @@ function generateProductPages() {
 
       // Build carousel slides
       let carouselSlidesHtml = '';
+      // Remove 'build/' prefix from path for HTML output
+      const htmlPath = productsDir.replace(/^build\//, '');
       imageFiles.forEach((imgFile, index) => {
-        const imgPath = `${productsDir}/${folderName}/${imgFile}`;
+        const imgPath = `${htmlPath}/${folderName}/${imgFile}`;
         const activeClass = index === 0 ? 'active' : '';
         carouselSlidesHtml += `
             <div class="carousel-item ${activeClass}">
@@ -96,7 +98,7 @@ function generateProductPages() {
       let thumbnailsHtml = '';
       if (imageFiles.length > 1) {
         imageFiles.forEach((imgFile, index) => {
-          const imgPath = `${productsDir}/${folderName}/${imgFile}`;
+          const imgPath = `${htmlPath}/${folderName}/${imgFile}`;
           thumbnailsHtml += `
             <img src="${imgPath}" alt="${productConfig.name}" class="thumbnail-image" data-bs-target="#productCarousel" data-bs-slide-to="${index}">
           `;

@@ -20,7 +20,7 @@
       "vars": {
         "PRODUCTS_TITLE": "Our Products",
         "PRODUCTS_SUBTITLE": "Discover our premium collection",
-        "PRODUCTS_DIR": "custom",
+        "PRODUCTS_DIR": "build/custom",
         "BUTTON_TEXT": "View Details"
       }
     }

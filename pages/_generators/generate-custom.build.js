@@ -9,7 +9,7 @@ const path = require('path');
  * This script is called during the build process to create individual pages for each product
  */
 function generateProductPages() {
-  const productsDir = 'custom';
+  const productsDir = 'build/custom';
   const pagesDir = 'pages';
   const templateFile = path.join(pagesDir, '_custom-detail-template.html');
   
@@ -64,8 +64,11 @@ function generateProductPages() {
 
       // Build carousel slides
       let carouselSlidesHtml = '';
+
+      // Remove 'build/' prefix from path for HTML output
+      const htmlPath = productsDir.replace(/^build\//, '');
       imageFiles.forEach((imgFile, index) => {
-        const imgPath = `${productsDir}/${folderName}/${imgFile}`;
+        const imgPath = `${htmlPath}/${folderName}/${imgFile}`;
         const activeClass = index === 0 ? 'active' : '';
         carouselSlidesHtml += `
             <div class="carousel-item ${activeClass}">
@@ -96,7 +99,7 @@ function generateProductPages() {
       let thumbnailsHtml = '';
       if (imageFiles.length > 1) {
         imageFiles.forEach((imgFile, index) => {
-          const imgPath = `${productsDir}/${folderName}/${imgFile}`;
+          const imgPath = `${htmlPath}/${folderName}/${imgFile}`;
           thumbnailsHtml += `
             <img src="${imgPath}" alt="${productConfig.name}" class="thumbnail-image" data-bs-target="#productCarousel" data-bs-slide-to="${index}">
           `;

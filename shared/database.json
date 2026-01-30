@@ -1,0 +1,18 @@
+{
+  "collections": [
+    {
+      "name": "products",
+      "source": "shared/products",
+      "destination": "products",
+      "enabled": true,
+      "description": "Main product collection"
+    },
+    {
+      "name": "custom",
+      "source": "shared/custom",
+      "destination": "custom",
+      "enabled": true,
+      "description": "Custom items collection"
+    }
+  ]
+}

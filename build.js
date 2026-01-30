@@ -7,9 +7,16 @@ const PAGES_DIR = 'pages';
 const BUILD_DIR = 'build';
 const ASSETS_DIR = 'assets';
 const CONFIG_FILE = 'config.json';
+const DATABASE_FILE = 'shared/database.json';
 
 // Load site configuration
 const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
+
+// Load database configuration for collections
+let database = { collections: [] };
+if (fs.existsSync(DATABASE_FILE)) {
+  database = JSON.parse(fs.readFileSync(DATABASE_FILE, 'utf8'));
+}
 
 // Flatten config for easier variable replacement
 // Support both flat and nested config formats
@@ -445,6 +452,37 @@ function copyComponentJS() {
   copyPageJS(PAGES_DIR);
 }
 
+// Function to copy collections (products, custom items, etc.) based on database.json
+function copyCollections() {
+  if (!database.collections || database.collections.length === 0) {
+    console.log('[COLLECTIONS] No collections configured in database.json');
+    return;
+  }
+  
+  const enabledCollections = database.collections.filter(c => c.enabled);
+  
+  if (enabledCollections.length === 0) {
+    console.log('[COLLECTIONS] No enabled collections found');
+    return;
+  }
+  
+  console.log(`[COLLECTIONS] Found ${enabledCollections.length} enabled collection(s)`);
+  
+  enabledCollections.forEach(collection => {
+    const sourcePath = collection.source;
+    const destPath = path.join(BUILD_DIR, collection.destination);
+    
+    if (fs.existsSync(sourcePath)) {
+      copyDirectory(sourcePath, destPath);
+      console.log(`  ✓ ${collection.name}: ${sourcePath} → ${collection.destination}`);
+    } else {
+      console.log(`  ✗ ${collection.name}: Source not found (${sourcePath})`);
+    }
+  });
+  
+  console.log('');
+}
+
 // Main build process
 console.log('========================================');
 console.log('Starting website build process...');
@@ -470,19 +508,8 @@ console.log(`[CSS] Component styles copied to ${BUILD_DIR}/${ASSETS_DIR}/css/`);
 copyComponentJS();
 console.log(`[JS] Component scripts copied to ${BUILD_DIR}/${ASSETS_DIR}/js/\n`);
 
-// Copy products to build directory
-const PRODUCTS_DIR = 'products';
-if (fs.existsSync(PRODUCTS_DIR)) {
-  copyDirectory(PRODUCTS_DIR, path.join(BUILD_DIR, PRODUCTS_DIR));
-  console.log(`[PRODUCTS] Copied to ${BUILD_DIR}/${PRODUCTS_DIR}/`);
-}
-
-// Copy custom to build directory
-const CUSTOM_DIR = 'custom';
-if (fs.existsSync(CUSTOM_DIR)) {
-  copyDirectory(CUSTOM_DIR, path.join(BUILD_DIR, CUSTOM_DIR));
-  console.log(`[CUSTOM] Copied to ${BUILD_DIR}/${CUSTOM_DIR}/`);
-}
+// Copy collections (products, custom items, etc.) from shared folder
+copyCollections();
 
 // Execute page build scripts (for generating dynamic pages)
 const generatorsDir = path.join(PAGES_DIR, '_generators');

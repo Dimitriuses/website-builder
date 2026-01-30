@@ -12,7 +12,7 @@ const path = require('path');
  * @returns {string} - Compiled HTML
  */
 function build(vars, loadComponent, replaceVariables) {
-  const productsDir = vars.PRODUCTS_DIR || 'products';
+  const productsDir = vars.PRODUCTS_DIR || 'build/products';  // Read from build after collections copied
   const buttonText = vars.BUTTON_TEXT || 'View Details';
   
   // Load the productCard template
@@ -67,7 +67,9 @@ function build(vars, loadComponent, replaceVariables) {
           // Build carousel images HTML
           let carouselImagesHtml = '';
           imageFiles.forEach((imageFile, index) => {
-            const imagePath = `${productsDir}/${folderName}/${imageFile}`;
+            // Remove 'build/' prefix from path for HTML output
+            const htmlPath = productsDir.replace(/^build\//, '');
+            const imagePath = `${htmlPath}/${folderName}/${imageFile}`;
             const activeClass = index === 0 ? 'active' : '';
             carouselImagesHtml += `
           <div class="carousel-item ${activeClass}">
