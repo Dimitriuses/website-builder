@@ -6,6 +6,9 @@
   "layout": "_layout",
   "components": [
     {
+      "name": "contactIcons"
+    },
+    {
       "name": "hero",
       "vars": {
         "HERO_TITLE": "The Hard Fun",

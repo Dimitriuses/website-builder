@@ -131,18 +131,31 @@ function buildComponent(componentName, vars = {}) {
   const componentDir = path.join(COMPONENTS_DIR, componentName);
   const buildScriptPath = path.join(componentDir, `${componentName}.build.js`);
   
+  let html = '';
+  
   if (fs.existsSync(buildScriptPath)) {
     // Component has custom build logic
     const absolutePath = path.resolve(buildScriptPath);
     delete require.cache[absolutePath]; // Clear cache to allow rebuilds
     
     const buildScript = require(absolutePath);
-    return buildScript.build(vars, loadComponent, replaceVariables);
+    html = buildScript.build(vars, loadComponent, replaceVariables);
+  } else {
+    // Standard template replacement
+    const template = loadComponent(componentName);
+    html = replaceVariables(template, vars);
   }
   
-  // Standard template replacement
-  const template = loadComponent(componentName);
-  return replaceVariables(template, vars);
+  // Resolve nested {{COMPONENT:xxx}} placeholders
+  const componentPattern = /\{\{COMPONENT:([a-zA-Z0-9_-]+)\}\}/g;
+  let match;
+  while ((match = componentPattern.exec(html)) !== null) {
+    const nestedComponentName = match[1];
+    const nestedComponentHtml = buildComponent(nestedComponentName, vars);
+    html = html.replace(match[0], nestedComponentHtml);
+  }
+  
+  return html;
 }
 
 // Function to build a page

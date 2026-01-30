@@ -6,6 +6,9 @@
   "layout": "_layout",
   "components": [
     {
+      "name": "contactIcons"
+    },
+    {
       "name": "faq",
       "vars": {
         "FAQ_TITLE": "Custom Fursuit Maker — FAQ",

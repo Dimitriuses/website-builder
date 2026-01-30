@@ -8,6 +8,13 @@
       "phone": ""
     }
   },
+  "social": {
+    "telegram": "https://t.me/Romago235",
+    "whatsapp": "https://wa.me/380972354968",
+    "instagram": "https://ig.me/m/furry_merry_fellow",
+    "signal": "https://signal.me/#p/+380972354968",
+    "viber": "viber://chat?number=%2B380972354968"
+  },
   "build": {
     "output_dir": "build",
     "components_dir": "components",
