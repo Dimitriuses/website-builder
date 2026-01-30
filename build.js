@@ -474,9 +474,9 @@ function copyCollections() {
     
     if (fs.existsSync(sourcePath)) {
       copyDirectory(sourcePath, destPath);
-      console.log(`  ✓ ${collection.name}: ${sourcePath} → ${collection.destination}`);
+      console.log(`  [FOLDER] ${collection.name}: ${sourcePath} → ${collection.destination}`);
     } else {
-      console.log(`  ✗ ${collection.name}: Source not found (${sourcePath})`);
+      console.log(`  [ERROR] ${collection.name}: Source not found (${sourcePath})`);
     }
   });
   
