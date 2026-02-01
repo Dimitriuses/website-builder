@@ -126,10 +126,30 @@ function replaceVariables(template, vars) {
 }
 
 // Function to build a single component
-function buildComponent(componentName, vars = {}) {
+function buildComponent(componentName, vars = {}, buildStack = []) {
+  // Recursion protection - check if this component is already being built
+  if (buildStack.includes(componentName)) {
+    console.log(`  [WARNING] Circular dependency detected: ${buildStack.join(' -> ')} -> ${componentName}`);
+    return `<!-- Circular dependency: ${componentName} -->`;
+  }
+  
+  // Add to build stack
+  const newStack = [...buildStack, componentName];
+  
   // Check if component has a build script
   const componentDir = path.join(COMPONENTS_DIR, componentName);
   const buildScriptPath = path.join(componentDir, `${componentName}.build.js`);
+  const configPath = path.join(componentDir, `${componentName}.json`);
+  
+  // Load component configuration if exists
+  let componentConfig = { dependencies: [] };
+  if (fs.existsSync(configPath)) {
+    try {
+      componentConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    } catch (error) {
+      console.log(`  [WARNING] Failed to parse ${componentName}.json:`, error.message);
+    }
+  }
   
   let html = '';
   
@@ -149,11 +169,18 @@ function buildComponent(componentName, vars = {}) {
   // Resolve nested {{COMPONENT:xxx}} placeholders
   const componentPattern = /\{\{COMPONENT:([a-zA-Z0-9_-]+)\}\}/g;
   let match;
+  const matches = [];
+  
+  // Collect all matches first to avoid regex issues
   while ((match = componentPattern.exec(html)) !== null) {
-    const nestedComponentName = match[1];
-    const nestedComponentHtml = buildComponent(nestedComponentName, vars);
-    html = html.replace(match[0], nestedComponentHtml);
+    matches.push({ placeholder: match[0], name: match[1] });
   }
+  
+  // Replace each nested component
+  matches.forEach(({ placeholder, name }) => {
+    const nestedComponentHtml = buildComponent(name, vars, newStack);
+    html = html.replace(placeholder, nestedComponentHtml);
+  });
   
   return html;
 }
@@ -267,24 +294,48 @@ function collectComponentCSS(components, pageName) {
   const cssFiles = ['assets/css/global.css']; // Always include global
   const addedComponents = new Set();
   
-  // Add CSS for header and footer (always present)
-  cssFiles.push('assets/css/header.css');
-  cssFiles.push('assets/css/footer.css');
-  addedComponents.add('header');
-  addedComponents.add('footer');
+  // Helper function to add component CSS and its dependencies
+  function addComponentCSS(compName) {
+    if (addedComponents.has(compName)) return;
+    
+    const componentDir = path.join(COMPONENTS_DIR, compName);
+    const configPath = path.join(componentDir, `${compName}.json`);
+    const cssFile = path.join(componentDir, 'style.css');
+    
+    // Load component config to check for dependencies
+    let componentConfig = { dependencies: [] };
+    if (fs.existsSync(configPath)) {
+      try {
+        componentConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      } catch (error) {
+        // Ignore parse errors
+      }
+    }
+    
+    // Add dependencies first (depth-first)
+    if (componentConfig.dependencies && componentConfig.dependencies.length > 0) {
+      componentConfig.dependencies.forEach(dep => {
+        addComponentCSS(dep);
+      });
+    }
+    
+    // Add this component's CSS
+    if (fs.existsSync(cssFile)) {
+      cssFiles.push(`assets/css/${compName}.css`);
+      addedComponents.add(compName);
+    } else {
+      addedComponents.add(compName); // Mark as added even without CSS
+    }
+  }
   
-  // Add CSS for each component used
+  // Add CSS for header and footer (always present)
+  addComponentCSS('header');
+  addComponentCSS('footer');
+  
+  // Add CSS for each component used in page
   if (components) {
     components.forEach(comp => {
-      if (!addedComponents.has(comp.name)) {
-        const componentDir = path.join(COMPONENTS_DIR, comp.name);
-        const cssFile = path.join(componentDir, 'style.css');
-        
-        if (fs.existsSync(cssFile)) {
-          cssFiles.push(`assets/css/${comp.name}.css`);
-          addedComponents.add(comp.name);
-        }
-      }
+      addComponentCSS(comp.name);
     });
   }
   
@@ -318,22 +369,47 @@ function collectComponentJS(components, pageName) {
   const jsFiles = ['assets/js/global.js']; // Always include global utilities
   const addedComponents = new Set();
   
-  // Add JS for header (always present)
-  jsFiles.push('assets/js/header.js');
-  addedComponents.add('header');
+  // Helper function to add component JS and its dependencies
+  function addComponentJS(compName) {
+    if (addedComponents.has(compName)) return;
+    
+    const componentDir = path.join(COMPONENTS_DIR, compName);
+    const configPath = path.join(componentDir, `${compName}.json`);
+    const jsFile = path.join(componentDir, 'script.js');
+    
+    // Load component config to check for dependencies
+    let componentConfig = { dependencies: [] };
+    if (fs.existsSync(configPath)) {
+      try {
+        componentConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      } catch (error) {
+        // Ignore parse errors
+      }
+    }
+    
+    // Add dependencies first (depth-first)
+    if (componentConfig.dependencies && componentConfig.dependencies.length > 0) {
+      componentConfig.dependencies.forEach(dep => {
+        addComponentJS(dep);
+      });
+    }
+    
+    // Add this component's JS
+    if (fs.existsSync(jsFile)) {
+      jsFiles.push(`assets/js/${compName}.js`);
+      addedComponents.add(compName);
+    } else {
+      addedComponents.add(compName); // Mark as added even without JS
+    }
+  }
   
-  // Add JS for each component used
+  // Add JS for header (always present)
+  addComponentJS('header');
+  
+  // Add JS for each component used in page
   if (components) {
     components.forEach(comp => {
-      if (!addedComponents.has(comp.name)) {
-        const componentDir = path.join(COMPONENTS_DIR, comp.name);
-        const jsFile = path.join(componentDir, 'script.js');
-        
-        if (fs.existsSync(jsFile)) {
-          jsFiles.push(`assets/js/${comp.name}.js`);
-          addedComponents.add(comp.name);
-        }
-      }
+      addComponentJS(comp.name);
     });
   }
   
