@@ -112,9 +112,7 @@ function generateProductPages() {
         description: productConfig.description || '',
         layout: '_layout',
         header_theme: 'dark',
-        components: [
-          {"name": "contactIcons"}
-        ],
+        components: [],
         content: template
           .replace(/{{CAROUSEL_SLIDES}}/g, carouselSlidesHtml)
           .replace(/{{CAROUSEL_CONTROLS}}/g, carouselControlsHtml)

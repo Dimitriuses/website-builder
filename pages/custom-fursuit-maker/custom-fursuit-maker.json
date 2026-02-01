@@ -6,9 +6,6 @@
   "layout": "_layout",
   "components": [
     {
-      "name": "contactIcons"
-    },
-    {
       "name": "hero",
       "vars": {
         "HERO_TITLE": "Unleash Your Fursona",

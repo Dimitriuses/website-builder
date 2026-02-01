@@ -5,9 +5,7 @@
   "header_theme": "dark",
   "layout": "_layout",
   "components": [
-    {
-      "name": "contactIcons"
-    },
+    
     {
       "name": "hero",
       "vars": {
